@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wiz-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wiz-app
+  template:
+    metadata:
+      labels:
+        app: wiz-app
+    spec:
+      containers:
+      - name: wiz-app
+        image: your-docker-registry/wiz-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: wiz-app-secrets
+              key: mongodb-uri
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wiz-app-secrets
+              key: secret-key
