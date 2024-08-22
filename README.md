@@ -111,62 +111,63 @@ The Wiz-App infrastructure consists of a VPC, EC2 instances for a database and a
 
 1. Configure MongoDB:
    ```
-ssh -i <your-key.pem> ubuntu@<wiz-db-public-ip>
-sudo systemctl start mongod
-sudo systemctl enable mongod
-mongo
-use taskdb
-db.createUser({
-user: "taskuser",
-pwd: "your-secure-password",
-roles: [ { role: "readWrite", db: "taskdb" } ]
-})
-exit
+    ssh -i <your-key.pem> ubuntu@<wiz-db-public-ip>
+    sudo systemctl start mongod
+    sudo systemctl enable mongod
+    mongo
+    use taskdb
+    db.createUser({
+    user: "taskuser",
+    pwd: "your-secure-password",
+    roles: [ { role: "readWrite", db: "taskdb" } ]
+    })
+    exit
    ```
-Update MongoDB configuration to enable authentication:   
+   
+   Update MongoDB configuration to enable authentication:   
    ```
-sudo nano /etc/mongod.conf
+    sudo nano /etc/mongod.conf
    ```
-Add or modify these lines:
+    Add or modify these lines:
    ```
-security:
-authorization: enabled
+    security:
+    authorization: enabled
    ```
-Restart MongoDB:
+    Restart MongoDB:
    ```
-sudo systemctl restart mongod
+    sudo systemctl restart mongod
    ```
 
 2. Build and Push Docker Image to ECR:
    ```
-aws ecr create-repository --repository-name wiz-app --region <your-region>
-aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.<your-region>.amazonaws.com
-cd ../tasky
-docker build -t wiz-app .
-docker tag wiz-app:latest <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/wiz-app:latest
-docker push <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/wiz-app:latest
+    aws ecr create-repository --repository-name wiz-app --region <your-region>
+    aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.<your-region>.amazonaws.com
+    cd ../tasky
+    docker build -t wiz-app .
+    docker tag wiz-app:latest <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/wiz-app:latest
+    docker push <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/wiz-app:latest
    ```
 3. Update Kubernetes Deployment:
-Edit `kubernetes/deployment.yaml` to use your ECR image.
+    Edit `kubernetes/deployment.yaml` to use your ECR image.
 
 4. Create Kubernetes Secrets:
    ```
-cd ../kubernetes
-kubectl create secret generic wiz-app-secrets \
-  --from-literal=mongodb-uri="mongodb://taskuser:your-secure-password@<wiz-db-public-ip>:27017/taskdb" \
-  --from-literal=secret-key="your-secret-key"
+    cd ../kubernetes
+    kubectl create secret generic wiz-app-secrets \
+    --from-literal=mongodb-uri="mongodb://taskuser:your-secure-password@<wiz-db-public-ip>:27017/taskdb" \
+    --from-literal=secret-key="your-secret-key"
    ```
 
 5. Deploy Kubernetes Resources:
    ```
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
+    kubectl apply -f deployment.yaml
+    kubectl apply -f service.yaml
    ```
 
 6. Verify Deployment:
    ```
-kubectl get pods
-kubectl get services wiz-app
+    kubectl get pods
+    kubectl get services wiz-app
    ```
 
 7. Access the Application:
